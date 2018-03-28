@@ -2,9 +2,8 @@
 项目使用的是MySql存储, 需要先创建以下表结构:
 这个项目是根据其他github项目  修改学习了一下 
 原项目:https://github.com/wanghongfei/spring-security-oauth2-example
-```
-```
-这时就可以访问授权页面了:
+
+访问授权页面了:
 ```
 localhost:8080/oauth/authorize?client_id=client&response_type=code&redirect_uri=http://www.baidu.com
 ```
@@ -141,7 +140,7 @@ Spring Cloud Security OAuth2通过`DefaultTokenServices`类来完成token生成�
 
 ## 5. 总结
 至此一个能在生产环境下使用的授权服务就搭建好了。其实我们在实际使用时应该适当定制`JdbcTokenStore`或`ClientDetailsService`来实适应业务需要，甚至可以直接从0开始实现接口，完全不用框架提供的实现。另外，Spring 直接将`DefaultOAuth2AccessToken`序列化成字节保存到数据库中的设计，我认为是非常不合理的。或许设计者的初衷是保密`access_token`，但是通过加密的方法也可以实现，完全不应该直接扔字节。不过通过定制`TokenStore`接口，我们可以使用自己的表结构而不拘泥于默认实现。
-
+ 
 ## 6. 个人看法
 Spring的OAuth2实现有些过于复杂了，oauth2本身只是个非常简单的协议，完全可以自己在SpringMVC的基础上自由实现，没有难度，也不复杂。我想很多人去用框架应该是担心oauth2协议复杂实现起来健壮性不足，其实是多虑了。如果是开发我个人的项目，我肯定会不使用任何框架。
 
