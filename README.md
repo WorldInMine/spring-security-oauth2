@@ -138,7 +138,7 @@ Spring Cloud Security OAuth2通过`DefaultTokenServices`类来完成token生成�
 这里不得不说 Spring 设计有一个奇葩地的方。注意看`oauth_access_token`表是存放访问令牌的，但是并没有直接在字段中存放token。Spring 使用`OAuth2AccessToken`来抽象与令牌有关的所有属性，在写入到数据库时，**Spring将该对象通过JDK自带的序列化机制序列成字节** 直接保存到了该表的`token`字段中。也就是说，如果只看数据表你是看不出`access_token`的值是多少，过期时间等信息的。这就给资源服务器的实现带来了麻烦。我们的资源提供方并没有使用Spring Security，也不想引入 Spring Security 的任何依赖，这时候就只能将 `DefaultOAuth2AccessToken`的源码copy到资源提供方的项目中，然后读取`token`字段并反序列化还原对象来获取token信息。但是如果这样做还会遇到反序列化兼容性的问题，具体解决方法参考我另一篇博文: http://blog.csdn.net/neosmith/article/details/52539614
 
 ## 5. 总结
-至此一个能在生产环境下使用的授权服务就搭建好了。其实我们在实际使用时应该适当定制`JdbcTokenStore`或`ClientDetailsService`来实适应业务需要，甚至可以直接从0开始实现接口，完全不用框架提供的实现。另外，Spring 直接将`DefaultOAuth2AccessToken`序列化成字节保存到数据库中的设计，我认为是非常不合理的。或许设计者的初衷是保密`access_token`，但是通过加密的方法也可以实现，完全不应该直接扔字节。不过通过定制`TokenStore`接口，我们可以使用自己的表结构而不拘泥于默认实现。
+至此一个能在生产环境下使用的授权服务就搭建好了。其实我们在实际使用时应该适当定制`JdbcTokenStore`或`ClientDetailsService`来实适应业务需要，甚至可以直接从0开始实现接口 ，完全不用框架提供的实现。另外，Spring 直接将`DefaultOAuth2AccessToken`序列化成字节保存到数据库中的设计，我认为是非常不合理的。或许设计者的初衷是保密`access_token`，但是通过加密的方法也可以实现，完全不应该直接扔字节。不过通过定制`TokenStore`接口，我们可以使用自己的表结构而不拘泥于默认实现。
  
 ## 6. 个人看法
 Spring的OAuth2实现有些过于复杂了，oauth2本身只是个非常简单的协议，完全可以自己在SpringMVC的基础上自由实现，没有难度，也不复杂。我想很多人去用框架应该是担心oauth2协议复杂实现起来健壮性不足，其实是多虑了。如果是开发我个人的项目，我肯定会不使用任何框架。
