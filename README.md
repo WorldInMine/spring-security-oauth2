@@ -1,7 +1,6 @@
 # Spring Security OAuth2 Demo
 项目使用的是MySql存储, 需要先创建以下表结构:
 这个项目是根据其他github项目  修改学习了一下 
-原项目:https://github.com/wanghongfei/spring-security-oauth2-example
 
 访问授权页面了:
 ```
