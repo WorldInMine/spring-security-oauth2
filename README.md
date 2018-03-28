@@ -1,5 +1,7 @@
 # Spring Security OAuth2 Demo
 项目使用的是MySql存储, 需要先创建以下表结构:
+这个项目是根据其他github项目  修改学习了一下 
+原项目:https://github.com/wanghongfei/spring-security-oauth2-example
 ```
 
 CREATE SCHEMA IF NOT EXISTS `alan-oauth` DEFAULT CHARACTER SET utf8 ;
@@ -119,8 +121,8 @@ DEFAULT CHARACTER SET = utf8;
 ```
 localhost:8080/oauth/authorize?client_id=client&response_type=code&redirect_uri=http://www.baidu.com
 ```
-访问时Spring让你登陆,随便输入一个用户名密码即可。
-**注意, 如果每次登陆时输入的用户名不一样,那么Spring Security会认为是不同的用户,因此访问/token/authorize会再次显示授权页面。如果用户名一致, 则只需要授权一次**
+访问时Spring让你登陆,用户名 john 密码 123 后面可以自定义usedetailService() 进行密码验证
+
 
 数据库连接信息在`application.properties`中配置。
 
@@ -256,5 +258,3 @@ Spring Cloud Security OAuth2通过`DefaultTokenServices`类来完成token生成�
 ## 6. 个人看法
 Spring的OAuth2实现有些过于复杂了，oauth2本身只是个非常简单的协议，完全可以自己在SpringMVC的基础上自由实现，没有难度，也不复杂。我想很多人去用框架应该是担心oauth2协议复杂实现起来健壮性不足，其实是多虑了。如果是开发我个人的项目，我肯定会不使用任何框架。
 
----
-github地址： https://github.com/wanghongfei/spring-security-oauth2-example
