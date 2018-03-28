@@ -1,126 +1,13 @@
 # Spring Security OAuth2 Demo
 项目使用的是MySql存储, 需要先创建以下表结构:
-```
+这个项目是根据其他github项目  修改学习了一下 
 
-CREATE SCHEMA IF NOT EXISTS `alan-oauth` DEFAULT CHARACTER SET utf8 ;
-USE `alan-oauth` ;
-
--- -----------------------------------------------------
--- Table `alan-oauth`.`clientdetails`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `alan-oauth`.`clientdetails` (
-  `appId` VARCHAR(128) NOT NULL,
-  `resourceIds` VARCHAR(256) NULL DEFAULT NULL,
-  `appSecret` VARCHAR(256) NULL DEFAULT NULL,
-  `scope` VARCHAR(256) NULL DEFAULT NULL,
-  `grantTypes` VARCHAR(256) NULL DEFAULT NULL,
-  `redirectUrl` VARCHAR(256) NULL DEFAULT NULL,
-  `authorities` VARCHAR(256) NULL DEFAULT NULL,
-  `access_token_validity` INT(11) NULL DEFAULT NULL,
-  `refresh_token_validity` INT(11) NULL DEFAULT NULL,
-  `additionalInformation` VARCHAR(4096) NULL DEFAULT NULL,
-  `autoApproveScopes` VARCHAR(256) NULL DEFAULT NULL,
-  PRIMARY KEY (`appId`))
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
-
-
--- -----------------------------------------------------
--- Table `alan-oauth`.`oauth_access_token`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `alan-oauth`.`oauth_access_token` (
-  `token_id` VARCHAR(256) NULL DEFAULT NULL,
-  `token` BLOB NULL DEFAULT NULL,
-  `authentication_id` VARCHAR(128) NOT NULL,
-  `user_name` VARCHAR(256) NULL DEFAULT NULL,
-  `client_id` VARCHAR(256) NULL DEFAULT NULL,
-  `authentication` BLOB NULL DEFAULT NULL,
-  `refresh_token` VARCHAR(256) NULL DEFAULT NULL,
-  PRIMARY KEY (`authentication_id`))
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
-
-
--- -----------------------------------------------------
--- Table `alan-oauth`.`oauth_approvals`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `alan-oauth`.`oauth_approvals` (
-  `userId` VARCHAR(256) NULL DEFAULT NULL,
-  `clientId` VARCHAR(256) NULL DEFAULT NULL,
-  `scope` VARCHAR(256) NULL DEFAULT NULL,
-  `status` VARCHAR(10) NULL DEFAULT NULL,
-  `expiresAt` DATETIME NULL DEFAULT NULL,
-  `lastModifiedAt` DATETIME NULL DEFAULT NULL)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
-
-
--- -----------------------------------------------------
--- Table `alan-oauth`.`oauth_client_details`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `alan-oauth`.`oauth_client_details` (
-  `client_id` VARCHAR(128) NOT NULL,
-  `resource_ids` VARCHAR(256) NULL DEFAULT NULL,
-  `client_secret` VARCHAR(256) NULL DEFAULT NULL,
-  `scope` VARCHAR(256) NULL DEFAULT NULL,
-  `authorized_grant_types` VARCHAR(256) NULL DEFAULT NULL,
-  `web_server_redirect_uri` VARCHAR(256) NULL DEFAULT NULL,
-  `authorities` VARCHAR(256) NULL DEFAULT NULL,
-  `access_token_validity` INT(11) NULL DEFAULT NULL,
-  `refresh_token_validity` INT(11) NULL DEFAULT NULL,
-  `additional_information` VARCHAR(4096) NULL DEFAULT NULL,
-  `autoapprove` VARCHAR(256) NULL DEFAULT NULL,
-  PRIMARY KEY (`client_id`))
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
-
-
--- -----------------------------------------------------
--- Table `alan-oauth`.`oauth_client_token`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `alan-oauth`.`oauth_client_token` (
-  `token_id` VARCHAR(256) NULL DEFAULT NULL,
-  `token` BLOB NULL DEFAULT NULL,
-  `authentication_id` VARCHAR(128) NOT NULL,
-  `user_name` VARCHAR(256) NULL DEFAULT NULL,
-  `client_id` VARCHAR(256) NULL DEFAULT NULL,
-  PRIMARY KEY (`authentication_id`))
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
-
-
--- -----------------------------------------------------
--- Table `alan-oauth`.`oauth_code`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `alan-oauth`.`oauth_code` (
-  `code` VARCHAR(256) NULL DEFAULT NULL,
-  `authentication` BLOB NULL DEFAULT NULL)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
-
-
--- -----------------------------------------------------
--- Table `alan-oauth`.`oauth_refresh_token`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `alan-oauth`.`oauth_refresh_token` (
-  `token_id` VARCHAR(256) NULL DEFAULT NULL,
-  `token` BLOB NULL DEFAULT NULL,
-  `authentication` BLOB NULL DEFAULT NULL)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
-
-```
-然后在`oauth_client_details`表中插入记录:
-```
-# client_id, resource_ids, client_secret, scope, authorized_grant_types, web_server_redirect_uri, authorities, access_token_validity, refresh_token_validity, additional_information, autoapprove
-'client', NULL, 'secret', 'app', 'authorization_code', 'http://www.baidu.com', NULL, NULL, NULL, NULL, NULL
-```
-这时就可以访问授权页面了:
+访问授权页面了:
 ```
 localhost:8080/oauth/authorize?client_id=client&response_type=code&redirect_uri=http://www.baidu.com
 ```
-访问时Spring让你登陆,随便输入一个用户名密码即可。
-**注意, 如果每次登陆时输入的用户名不一样,那么Spring Security会认为是不同的用户,因此访问/token/authorize会再次显示授权页面。如果用户名一致, 则只需要授权一次**
+访问时Spring让你登陆,用户名 john 密码 123 后面可以自定义usedetailService() 进行密码验证
+
 
 数据库连接信息在`application.properties`中配置。
 
@@ -251,10 +138,8 @@ Spring Cloud Security OAuth2通过`DefaultTokenServices`类来完成token生成�
 这里不得不说 Spring 设计有一个奇葩地的方。注意看`oauth_access_token`表是存放访问令牌的，但是并没有直接在字段中存放token。Spring 使用`OAuth2AccessToken`来抽象与令牌有关的所有属性，在写入到数据库时，**Spring将该对象通过JDK自带的序列化机制序列成字节** 直接保存到了该表的`token`字段中。也就是说，如果只看数据表你是看不出`access_token`的值是多少，过期时间等信息的。这就给资源服务器的实现带来了麻烦。我们的资源提供方并没有使用Spring Security，也不想引入 Spring Security 的任何依赖，这时候就只能将 `DefaultOAuth2AccessToken`的源码copy到资源提供方的项目中，然后读取`token`字段并反序列化还原对象来获取token信息。但是如果这样做还会遇到反序列化兼容性的问题，具体解决方法参考我另一篇博文: http://blog.csdn.net/neosmith/article/details/52539614
 
 ## 5. 总结
-至此一个能在生产环境下使用的授权服务就搭建好了。其实我们在实际使用时应该适当定制`JdbcTokenStore`或`ClientDetailsService`来实适应业务需要，甚至可以直接从0开始实现接口，完全不用框架提供的实现。另外，Spring 直接将`DefaultOAuth2AccessToken`序列化成字节保存到数据库中的设计，我认为是非常不合理的。或许设计者的初衷是保密`access_token`，但是通过加密的方法也可以实现，完全不应该直接扔字节。不过通过定制`TokenStore`接口，我们可以使用自己的表结构而不拘泥于默认实现。
-
+至此一个能在生产环境下使用的授权服务就搭建好了。其实我们在实际使用时应该适当定制`JdbcTokenStore`或`ClientDetailsService`来实适应业务需要，甚至可以直接从0开始实现接口 ，完全不用框架提供的实现。另外，Spring 直接将`DefaultOAuth2AccessToken`序列化成字节保存到数据库中的设计，我认为是非常不合理的。或许设计者的初衷是保密`access_token`，但是通过加密的方法也可以实现，完全不应该直接扔字节。不过通过定制`TokenStore`接口，我们可以使用自己的表结构而不拘泥于默认实现。
+ 
 ## 6. 个人看法
 Spring的OAuth2实现有些过于复杂了，oauth2本身只是个非常简单的协议，完全可以自己在SpringMVC的基础上自由实现，没有难度，也不复杂。我想很多人去用框架应该是担心oauth2协议复杂实现起来健壮性不足，其实是多虑了。如果是开发我个人的项目，我肯定会不使用任何框架。
 
----
-github地址： https://github.com/wanghongfei/spring-security-oauth2-example
